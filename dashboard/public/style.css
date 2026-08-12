@@ -85,6 +85,18 @@ button {
   padding: 13px;
 }
 
+.btn.discord {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 13px; text-decoration: none;
+  background: #5865F2; color: #fff;
+}
+.btn.discord:hover { background: #4752c4; transform: translateY(-1px); }
+
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  object-fit: cover; border: 2px solid var(--purple);
+}
+
 /* ---------- Header ---------- */
 header {
   display: flex; align-items: center; justify-content: space-between;

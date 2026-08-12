@@ -9,11 +9,15 @@ try {
 } catch {}
 
 const dash = fileCfg.dashboard || {};
+const oauth = fileCfg.oauth || {};
 
 const config = {
   token: process.env.TOKEN || fileCfg.token,
   clientId: process.env.CLIENT_ID || fileCfg.clientId,
   owners: process.env.OWNERS ? process.env.OWNERS.split(',').map((s) => s.trim()) : fileCfg.owners || [],
+  oauth: {
+    clientSecret: process.env.DISCORD_CLIENT_SECRET || oauth.clientSecret || ''
+  },
   dashboard: {
     enabled: process.env.DASHBOARD_ENABLED !== 'false' && dash.enabled !== false,
     port: Number(process.env.PORT || dash.port || 3000),

@@ -30,11 +30,20 @@
 3. الصق رابط المستودع: `https://github.com/<اسمك>/hantakyro`
 4. اضغط **Apply** → Render حيقرأ ملف `render.yaml` تلقائياً.
 
+### ⭐ خطوة إضافية مهمة — تفعيل تسجيل الدخول بـ Discord (OAuth2)
+1. افتح https://discord.com/developers/applications → بوتك → تبويب **OAuth2**
+2. تحت **Redirects** أضف هذين الرابطين:
+   - `https://hantakyro.onrender.com/auth/callback`
+   - `http://localhost:3000/auth/callback`
+3. انسخ **Client Secret** من نفس الصفحة (زر Copy).
+4. هذا الـ Secret حتحطه في Render (مفصل بالخطوة 5) — بدونه **كل شخص لازم يسجل دخول بـ Discord** ما بيشتغل.
+
 ## الخطوة 5 — حط أسرار البوت
 حيطلب منك تعبئة المتغيرات (حط قيم حقيقية):
 - `TOKEN` → توكن البوت (من Discord Developer Portal → Bot → Reset Token)
 - `CLIENT_ID` → الـ Application ID (من General Information)
-- `DASH_PASSWORD` → كلمة مرور الداشبورد (اكتب أي كلمة تعجبك)
+- `DASH_PASSWORD` → (اختياري الآن) كلمة مرور قديمة — الداشبورد صار بـ Discord login
+- `DISCORD_CLIENT_SECRET` → الـ Client Secret من تبويب OAuth2 ✅
 - `OWNERS` → (اختياري) آيدي حسابك
 
 > ⚠️ تأكد إنك فعّلت **Server Members Intent** و **Message Content Intent** في صفحة البوت.

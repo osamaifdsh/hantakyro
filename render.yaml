@@ -13,5 +13,7 @@ services:
         sync: false
       - key: DASH_PASSWORD
         sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
       - key: OWNERS
         sync: false

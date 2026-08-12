@@ -1,8 +1,7 @@
-const KEY = 'hantakyro_key';
 const API = '/api';
 
 const state = {
-  key: localStorage.getItem(KEY) || '',
+  me: null,
   guilds: [],
   current: null,
   data: null
@@ -19,16 +18,10 @@ function toast(msg, type) {
   el._t = setTimeout(() => el.classList.add('hidden'), 2600);
 }
 
-function hx(headers = {}) {
-  return { 'Content-Type': 'application/json', 'X-Dash-Key': state.key, ...headers };
-}
-
 async function req(url, opts = {}) {
-  const res = await fetch(API + url, { ...opts, headers: hx(opts.headers) });
+  const res = await fetch(API + url, { ...opts, headers: { 'Content-Type': 'application/json' } });
   if (res.status === 401) {
-    state.key = '';
-    localStorage.removeItem(KEY);
-    showLogin();
+    window.location.href = '/auth/login';
     throw new Error('Unauthorized');
   }
   if (!res.ok) {
@@ -56,19 +49,31 @@ const MODULES = [
   ['antiRaid', 'Anti Raid'], ['antiSpam', 'Anti Spam'], ['antiEveryone', 'Anti Everyone']
 ];
 
-async function refreshStatus() {
+async function boot() {
   try {
-    const info = await fetch('/api/guilds', { headers: hx() }).then((r) => r.json());
+    const me = await fetch('/api/me').then((r) => r.json());
+    if (!me || me.error) return showLogin();
+    state.me = me;
+    showApp();
+    renderHeader();
     $('status-dot').classList.add('online');
     $('status-text').textContent = 'Online';
+    await loadGuilds();
   } catch {
-    $('status-dot').classList.remove('online');
-    $('status-text').textContent = 'Offline';
+    showLogin();
   }
 }
 
+function renderHeader() {
+  $('user-name').textContent = state.me.global_name || state.me.username;
+  const u = state.me;
+  $('user-avatar').src = u.avatar
+    ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=64`
+    : `https://cdn.discordapp.com/embed/avatars/${Number(u.id) % 5}.png`;
+}
+
 async function loadGuilds() {
-  state.guilds = await req('/guilds');
+  state.guilds = await req('/me/guilds');
   renderGuilds();
 }
 
@@ -76,18 +81,20 @@ function renderGuilds() {
   const box = $('guild-list');
   box.innerHTML = '';
   if (!state.guilds.length) {
-    box.innerHTML = '<p class="empty" style="text-align:left;color:var(--muted);font-size:13px;">No servers found. Add Hantakyro to a server.</p>';
+    box.innerHTML = '<p class="empty" style="text-align:left;color:var(--muted);font-size:13px;">لا يوجد سيرفرات. أضف Hantakyro لسيرفرك ثم أعد فتح الصفحة.</p>';
     return;
   }
   state.guilds.forEach((g) => {
     const item = document.createElement('div');
     item.className = 'guild-item' + (state.current === g.id ? ' active' : '');
-    const avatar = g.icon ? `<img src="${g.icon}" />` : `<div class="guild-avatar">${(g.name || '?')[0].toUpperCase()}</div>`;
+    const avatar = g.icon
+      ? `<img src="https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=64" />`
+      : `<div class="guild-avatar">${(g.name || '?')[0].toUpperCase()}</div>`;
     item.innerHTML = `
       ${avatar}
       <div class="g-info">
         <div class="g-name">${g.name}</div>
-        <div class="g-sub">${g.members} members</div>
+        <div class="g-sub">${g.members || '-'} members</div>
       </div>
       <span class="g-item-state">${g.enabled ? '🟢' : '🔴'}</span>`;
     item.onclick = () => selectGuild(g.id);
@@ -103,8 +110,13 @@ async function selectGuild(id) {
   $('guild-panel').classList.remove('hidden');
 
   const g = state.guilds.find((x) => x.id === id);
-  $('guild-icon').src = g.icon || '';
-  $('guild-icon').style.display = g.icon ? '' : 'none';
+  if (g.icon) {
+    $('guild-icon').src = `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128`;
+    $('guild-icon').style.display = '';
+  } else {
+    $('guild-icon').src = '';
+    $('guild-icon').style.display = 'none';
+  }
   $('guild-name').textContent = g.name;
   $('guild-meta').textContent = `${g.members} members • punishment: ${g.punish}`;
 
@@ -158,7 +170,7 @@ function renderWhitelist() {
   const box = $('whitelist');
   box.innerHTML = '';
   if (!state.data.whitelist.length) {
-    box.innerHTML = '<p style="color:var(--muted);font-size:13px;">No whitelisted users yet. Use /list or add an ID below.</p>';
+    box.innerHTML = '<p style="color:var(--muted);font-size:13px;">لا يوجد أعضاء محميون بعد. أضف ID أدناه.</p>';
     return;
   }
   state.data.whitelist.forEach((id) => {
@@ -183,7 +195,7 @@ function renderWhitelistRoles() {
   const box = $('whitelist-roles');
   box.innerHTML = '';
   if (!state.data.whitelistRoles || !state.data.whitelistRoles.length) {
-    box.innerHTML = '<p style="color:var(--muted);font-size:13px;">No role whitelist yet. Members with these roles are also safe.</p>';
+    box.innerHTML = '<p style="color:var(--muted);font-size:13px;">لا يوجد رتب محمية حالياً.</p>';
     return;
   }
   state.data.whitelistRoles.forEach((id) => {
@@ -207,7 +219,7 @@ function renderLogs() {
   const body = $('logs').querySelector('tbody');
   body.innerHTML = '';
   if (!state.data.logs || !state.data.logs.length) {
-    body.innerHTML = '<tr><td colspan="4" style="color:var(--muted);">No protection events yet.</td></tr>';
+    body.innerHTML = '<tr><td colspan="4" style="color:var(--muted);">لا أحداث حماية بعد.</td></tr>';
     return;
   }
   state.data.logs.forEach((l) => {
@@ -222,27 +234,6 @@ function refreshStats() {
   $('stat-modules').textContent = Object.entries(state.data.protection).filter(([k, v]) => k !== 'enabled' && v).length;
   $('stat-whitelist').textContent = state.data.whitelist.length;
 }
-
-$('login-btn').onclick = async () => {
-  const v = $('login-key').value.trim();
-  if (!v) return;
-  try {
-    const res = await fetch('/api/guilds', { headers: hx({ 'X-Dash-Key': v }) });
-    if (res.status === 401) return toast('Wrong password', 'err');
-    state.key = v;
-    localStorage.setItem(KEY, v);
-    showApp();
-    await init();
-  } catch (e) {
-    toast(e.message, 'err');
-  }
-};
-
-$('logout-btn').onclick = () => {
-  state.key = '';
-  localStorage.removeItem(KEY);
-  showLogin();
-};
 
 $('master-toggle').onchange = async (e) => {
   await req('/guild/' + state.current + '/config', {
@@ -300,20 +291,7 @@ $('lockdown-toggle').onchange = async (e) => {
   });
   state.data.raidMode = r.raidMode;
   $('stat-raid').textContent = r.raidMode ? 'LOCKED' : 'Off';
-  toast('Lockdown ' + (r.raidMode ? 'ENABLED 🔴' : 'disabled 🟢'));
-};
-
-$('wl-role-add').onclick = async () => {
-  const id = $('wl-role-id').value.trim();
-  if (!id || !/^\d+$/.test(id)) return toast('Enter a valid role ID', 'err');
-  await req('/guild/' + state.current + '/whitelistroles', {
-    method: 'POST',
-    body: JSON.stringify({ roleId: id, action: 'add' })
-  });
-  toast('Role added to whitelist');
-  $('wl-role-id').value = '';
-  state.data.whitelistRoles.push(id);
-  renderWhitelistRoles();
+  toast('Lockdown ' + (r.raidMode ? 'ENABLED' : 'disabled'));
 };
 
 $('wl-add').onclick = async () => {
@@ -330,6 +308,19 @@ $('wl-add').onclick = async () => {
   refreshStats();
 };
 
+$('wl-role-add').onclick = async () => {
+  const id = $('wl-role-id').value.trim();
+  if (!id || !/^\d+$/.test(id)) return toast('Enter a valid role ID', 'err');
+  await req('/guild/' + state.current + '/whitelistroles', {
+    method: 'POST',
+    body: JSON.stringify({ roleId: id, action: 'add' })
+  });
+  toast('Role added to whitelist');
+  $('wl-role-id').value = '';
+  state.data.whitelistRoles.push(id);
+  renderWhitelistRoles();
+};
+
 $('pu-run').onclick = async () => {
   const id = $('pu-id').value.trim();
   if (!id || !/^\d+$/.test(id)) return toast('Enter a valid user ID', 'err');
@@ -343,22 +334,4 @@ $('pu-run').onclick = async () => {
   $('pu-reason').value = '';
 };
 
-async function init() {
-  await refreshStatus();
-  await loadGuilds();
-}
-
-if (state.key) {
-  fetch('/api/guilds', { headers: hx() })
-    .then((r) => {
-      if (r.status === 401) {
-        showLogin();
-        return Promise.reject();
-      }
-      showApp();
-      return init();
-    })
-    .catch(() => {});
-} else {
-  showLogin();
-}
+boot();
