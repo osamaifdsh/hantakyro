@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: hantakyro
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: TOKEN
+        sync: false
+      - key: CLIENT_ID
+        sync: false
+      - key: DASH_PASSWORD
+        sync: false
+      - key: OWNERS
+        sync: false

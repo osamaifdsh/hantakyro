@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hantakyro — Security Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="logo">🛡️</div>
+      <h1>Hantakyro</h1>
+      <p>The Strongest Protection Bot</p>
+      <input type="password" id="login-key" placeholder="Dashboard password" />
+      <button id="login-btn">Enter Dashboard</button>
+      <span class="hint">Password is in config.json → dashboard.password</span>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+    <header>
+      <div class="brand">
+        <span class="logo">🛡️</span>
+        <h1>Hantakyro <span class="tag">Security</span></h1>
+      </div>
+      <div class="header-right">
+        <span id="status-dot" class="dot"></span>
+        <span id="status-text">Offline</span>
+        <button id="logout-btn" class="btn ghost">Logout</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h3>Servers</h3>
+        <div id="guild-list"></div>
+      </aside>
+
+      <main>
+        <div id="no-guild" class="empty">
+          <div class="logo big">🛡️</div>
+          <h2>Select a server</h2>
+          <p>Choose a server from the list to manage its protection.</p>
+        </div>
+
+        <div id="guild-panel" class="hidden">
+          <div class="guild-head">
+            <img id="guild-icon" alt="" />
+            <div>
+              <h2 id="guild-name"></h2>
+              <span id="guild-meta"></span>
+            </div>
+            <div class="head-badge" id="guild-state"></div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><span id="stat-modules">0</span><label>Modules Active</label></div>
+            <div class="stat"><span id="stat-whitelist">0</span><label>Whitelisted</label></div>
+            <div class="stat"><span id="stat-punish">ban</span><label>Punishment</label></div>
+            <div class="stat"><span id="stat-raid">Off</span><label>Raid Mode</label></div>
+          </div>
+
+          <section class="card">
+            <div class="card-title">
+              <h3>Protection Modules</h3>
+              <div class="master">
+                <span>Master switch</span>
+                <label class="switch"><input type="checkbox" id="master-toggle" /><span class="slider"></span></label>
+              </div>
+            </div>
+            <div id="modules" class="grid"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-title"><h3>Settings</h3></div>
+            <div class="settings">
+              <div class="setting">
+                <label>Punishment mode</label>
+                <select id="punish-mode">
+                  <option value="ban">Ban</option>
+                  <option value="kick">Kick</option>
+                  <option value="strip">Strip roles</option>
+                </select>
+              </div>
+              <div class="setting">
+                <label>Raid threshold (joins)</label>
+                <input type="number" id="raid-threshold" min="2" max="50" />
+              </div>
+              <div class="setting">
+                <label>Raid window (seconds)</label>
+                <input type="number" id="raid-window" min="3" max="60" />
+              </div>
+              <div class="setting">
+                <label>Log channel (ID)</label>
+                <input type="text" id="log-channel" placeholder="Channel ID" />
+              </div>
+              <div class="setting">
+                <label>Raid lockdown</label>
+                <label class="switch"><input type="checkbox" id="lockdown-toggle" /><span class="slider"></span></label>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-title"><h3>Whitelist — Users</h3></div>
+            <div class="whitelist-add">
+              <input type="text" id="wl-id" placeholder="Discord user ID" />
+              <button class="btn primary" id="wl-add">Add to whitelist</button>
+            </div>
+            <div id="whitelist"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-title"><h3>Whitelist — Roles</h3></div>
+            <div class="whitelist-add">
+              <input type="text" id="wl-role-id" placeholder="Discord role ID" />
+              <button class="btn primary" id="wl-role-add">Add role</button>
+            </div>
+            <div id="whitelist-roles"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-title"><h3>Punish from Dashboard</h3></div>
+            <div class="punish-row">
+              <input type="text" id="pu-id" placeholder="Discord user ID" />
+              <input type="text" id="pu-reason" placeholder="Reason" />
+              <button class="btn danger" id="pu-run">Punish</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-title"><h3>Protection Logs</h3></div>
+            <table id="logs"><thead><tr><th>Time</th><th>Action</th><th>Target</th><th>By</th></tr></thead><tbody></tbody></table>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
