@@ -17,6 +17,7 @@ console.log('Token set:', config.token && !config.token.includes('PUT_YOUR') ? '
 console.log('ClientID set:', config.clientId && !config.clientId.includes('PUT_YOUR') ? 'yes' : 'no');
 console.log('ClientSecret set:', config.oauth.clientSecret ? 'yes' : 'no');
 console.log('Dashboard port:', config.dashboard.port);
+console.log('Node version:', process.version);
 
 const client = new Client({
   intents: [
@@ -27,7 +28,8 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildWebhooks,
     GatewayIntentBits.GuildEmojisAndStickers
-  ]
+  ],
+  ws: { timeout: 10000 }
 });
 
 try {
@@ -49,7 +51,42 @@ if (config.dashboard && config.dashboard.enabled) {
 initProtection(client);
 
 client.on('debug', (m) => console.log('[dbg]', m));
-client.on(Events.Error, (e) => console.error('[client error]', e.message));
+
+client.on('shardReady', (id) => console.log(`[SHARD ${id}] READY`));
+client.on('shardError', (e, id) => console.error(`[SHARD ${id}] ERROR:`, e.message));
+client.on('shardDisconnect', (event, id) => console.log(`[SHARD ${id}] DISCONNECT`, event ? event.code : ''));
+client.on('shardReconnecting', (id) => console.log(`[SHARD ${id}] RECONNECTING`));
+client.on('shardResume', (id, replayed) => console.log(`[SHARD ${id}] RESUMED (${replayed} events)`));
+client.on('invalidated', () => console.log('SESSION INVALIDATED'));
+
+setInterval(() => {
+  try {
+    const states = client.ws.shards.map((s) => `#${s.id}=${s.status}`);
+    console.log('[STATUS]', states.join(' ') || 'no shards');
+  } catch (e) {
+    console.log('[STATUS] error:', e.message);
+  }
+}, 15000);
+
+setTimeout(async () => {
+  console.log('[PROBE] Testing REST connectivity to Discord...');
+  try {
+    const res = await fetch('https://discord.com/api/v10/gateway');
+    const j = await res.json();
+    console.log('[PROBE] REST OK. Status:', res.status, '| Gateway url:', j.url);
+    console.log('[PROBE] Connecting raw WebSocket to gateway to test reachability...');
+    const WebSocket = require('ws');
+    const ws = new WebSocket(j.url);
+    const done = (msg) => { console.log('[PROBE]', msg); try { ws.close(); } catch {} };
+    ws.on('open', () => done('WS OPEN - gateway reachable'));
+    ws.on('error', (e) => done('WS ERROR: ' + e.message));
+    ws.on('close', (code, reason) => done('WS CLOSE: code=' + code + ' ' + reason.toString()));
+    ws.on('message', (d) => done('WS MSG: ' + d.toString().slice(0, 150)));
+    setTimeout(() => done('WS 15s timeout - no open, gateway NOT reachable'), 15000);
+  } catch (e) {
+    console.log('[PROBE] REST FAIL:', e.message);
+  }
+}, 8000);
 
 client.once(Events.ClientReady, () => {
   console.log('=====================================');
@@ -99,6 +136,7 @@ async function tryLogin() {
   } catch (err) {
     console.error('=== LOGIN FAILED ===');
     console.error('Status:', err.status || 'n/a');
+    console.error('Code:', err.code || 'n/a');
     console.error('Message:', err.message);
     console.error('Retrying in 15 seconds...');
     setTimeout(tryLogin, 15000);
