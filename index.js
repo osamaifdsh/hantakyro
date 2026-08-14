@@ -12,6 +12,12 @@ if (!config.token || config.token.includes('PUT_YOUR')) {
   process.exit(1);
 }
 
+console.log('Hantakyro booting...');
+console.log('Token set:', config.token && !config.token.includes('PUT_YOUR') ? 'yes' : 'no');
+console.log('ClientID set:', config.clientId && !config.clientId.includes('PUT_YOUR') ? 'yes' : 'no');
+console.log('ClientSecret set:', config.oauth.clientSecret ? 'yes' : 'no');
+console.log('Dashboard port:', config.dashboard.port);
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -24,13 +30,26 @@ const client = new Client({
   ]
 });
 
-console.log('Hantakyro booting...');
-console.log('Token set:', config.token && !config.token.includes('PUT_YOUR') ? 'yes' : 'no');
-console.log('ClientID set:', config.clientId && !config.clientId.includes('PUT_YOUR') ? 'yes' : 'no');
-console.log('ClientSecret set:', config.oauth.clientSecret ? 'yes' : 'no');
-console.log('Dashboard port:', config.dashboard.port);
+try {
+  client.commands = loadCommands();
+  console.log(`Loaded ${client.commands.size} commands.`);
+} catch (e) {
+  console.error('Failed to load commands:', e.message);
+  client.commands = new Map();
+}
+
+if (config.dashboard && config.dashboard.enabled) {
+  try {
+    startDashboard(client);
+  } catch (e) {
+    console.error('Dashboard failed to start:', e.message);
+  }
+}
+
+initProtection(client);
 
 client.on('debug', (m) => console.log('[dbg]', m));
+client.on(Events.Error, (e) => console.error('[client error]', e.message));
 
 client.once(Events.ClientReady, () => {
   console.log('=====================================');
@@ -40,19 +59,6 @@ client.once(Events.ClientReady, () => {
   console.log('=====================================');
 
   client.user.setActivity('🛡️ Protecting your server', { type: 3 });
-
-  client.commands = loadCommands();
-  console.log(`Loaded ${client.commands.size} commands.`);
-
-  initProtection(client);
-
-  if (config.dashboard && config.dashboard.enabled) {
-    try {
-      startDashboard(client);
-    } catch (e) {
-      console.error('Dashboard failed to start:', e.message);
-    }
-  }
 
   initCommands(client)
     .then((n) => console.log(`Registered ${n} slash commands globally.`))
@@ -86,13 +92,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.on(Events.Error, (e) => console.error('[client error]', e.message));
+async function tryLogin() {
+  try {
+    await client.login(config.token);
+    console.log('Login accepted, waiting for gateway...');
+  } catch (err) {
+    console.error('=== LOGIN FAILED ===');
+    console.error('Status:', err.status || 'n/a');
+    console.error('Message:', err.message);
+    console.error('Retrying in 15 seconds...');
+    setTimeout(tryLogin, 15000);
+  }
+}
 
-client.login(config.token).then(() => {
-  console.log('Login request accepted, waiting for gateway...');
-}).catch((err) => {
-  console.error('=== LOGIN FAILED ===');
-  console.error('Status:', err.status || 'n/a');
-  console.error('Message:', err.message);
-  console.error('Is the TOKEN env var on Render wrong or expired?');
-});
+tryLogin();
