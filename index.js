@@ -98,7 +98,7 @@ client.once(Events.ClientReady, () => {
   client.user.setActivity('🛡️ Protecting your server', { type: 3 });
 
   initCommands(client)
-    .then((n) => console.log(`Registered ${n} slash commands globally.`))
+    .then((n) => console.log(`Registered ${n.size} slash commands globally.`))
     .catch((e) => console.error('Command registration failed:', e.message));
 });
 
