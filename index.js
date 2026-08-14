@@ -1,8 +1,11 @@
 const { Client, GatewayIntentBits, Events } = require('discord.js');
 const config = require('./handlers/config');
+const { loadCommands, initCommands } = require('./handlers/commands');
 const { initProtection } = require('./handlers/protection');
-const { initCommands } = require('./handlers/commands');
 const { startDashboard } = require('./dashboard/server');
+
+process.on('unhandledRejection', (err) => console.error('Unhandled rejection:', err));
+process.on('uncaughtException', (err) => console.error('Uncaught exception:', err));
 
 if (!config.token || config.token.includes('PUT_YOUR')) {
   console.error('ERROR: You must put your bot token in config.json first.');
@@ -21,7 +24,7 @@ const client = new Client({
   ]
 });
 
-client.once(Events.ClientReady, async () => {
+client.once(Events.ClientReady, () => {
   console.log('=====================================');
   console.log(`  Hantakyro is ONLINE!`);
   console.log(`  Logged in as: ${client.user.tag}`);
@@ -30,26 +33,48 @@ client.once(Events.ClientReady, async () => {
 
   client.user.setActivity('🛡️ Protecting your server', { type: 3 });
 
-  client.commands = await initCommands(client);
+  client.commands = loadCommands();
+  console.log(`Loaded ${client.commands.size} commands.`);
+
   initProtection(client);
 
   if (config.dashboard && config.dashboard.enabled) {
-    startDashboard(client);
+    try {
+      startDashboard(client);
+    } catch (e) {
+      console.error('Dashboard failed to start:', e.message);
+    }
   }
+
+  initCommands(client)
+    .then((n) => console.log(`Registered ${n} slash commands globally.`))
+    .catch((e) => console.error('Command registration failed:', e.message));
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  const cmd = client.commands.get(interaction.commandName);
-  if (!cmd) return;
+  if (!interaction.isRepliable()) return;
+
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply({ content: 'Unsupported interaction type.', ephemeral: true }).catch(() => {});
+  }
+
+  const cmd = client.commands && client.commands.get(interaction.commandName);
+  if (!cmd) {
+    return interaction.reply({
+      content: '⚠️ This command is not loaded yet. Try again in a few seconds.',
+      ephemeral: true
+    }).catch(() => {});
+  }
+
   try {
     await cmd.execute(interaction, client);
   } catch (err) {
-    console.error(err);
-    await interaction.reply({
-      content: '⚠️ Something went wrong while running this command.',
-      ephemeral: true
-    }).catch(() => {});
+    console.error('Command error:', err);
+    const msg = { content: '⚠️ ' + (err.message || 'Something went wrong.'), ephemeral: true };
+    try {
+      if (interaction.deferred || interaction.replied) await interaction.followUp(msg);
+      else await interaction.reply(msg);
+    } catch {}
   }
 });
 

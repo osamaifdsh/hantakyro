@@ -278,8 +278,11 @@ function startDashboard(client) {
     res.json({ ok: true, ...result });
   });
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`🌐 Hantakyro Dashboard: http://localhost:${port}`);
+  });
+  server.on('error', (e) => {
+    console.error('Dashboard port error:', e.message);
   });
 }
 
