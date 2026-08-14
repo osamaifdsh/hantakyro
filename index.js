@@ -24,6 +24,14 @@ const client = new Client({
   ]
 });
 
+console.log('Hantakyro booting...');
+console.log('Token set:', config.token && !config.token.includes('PUT_YOUR') ? 'yes' : 'no');
+console.log('ClientID set:', config.clientId && !config.clientId.includes('PUT_YOUR') ? 'yes' : 'no');
+console.log('ClientSecret set:', config.oauth.clientSecret ? 'yes' : 'no');
+console.log('Dashboard port:', config.dashboard.port);
+
+client.on('debug', (m) => console.log('[dbg]', m));
+
 client.once(Events.ClientReady, () => {
   console.log('=====================================');
   console.log(`  Hantakyro is ONLINE!`);
@@ -78,7 +86,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.login(config.token).catch((err) => {
-  console.error('Failed to login. Check your token in config.json');
-  console.error(err);
+client.on(Events.Error, (e) => console.error('[client error]', e.message));
+
+client.login(config.token).then(() => {
+  console.log('Login request accepted, waiting for gateway...');
+}).catch((err) => {
+  console.error('=== LOGIN FAILED ===');
+  console.error('Status:', err.status || 'n/a');
+  console.error('Message:', err.message);
+  console.error('Is the TOKEN env var on Render wrong or expired?');
 });
