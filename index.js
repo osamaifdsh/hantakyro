@@ -95,7 +95,13 @@ client.once(Events.ClientReady, () => {
   console.log(`  Protecting: ${client.guilds.cache.size} server(s)`);
   console.log('=====================================');
 
-  client.user.setActivity('🛡️ Protecting your server', { type: 3 });
+  const updateActivity = () => {
+    try {
+      client.user.setActivity(`🛡️ Protecting ${client.guilds.cache.size} server(s)`, { type: 3 });
+    } catch {}
+  };
+  updateActivity();
+  setInterval(updateActivity, 5 * 60 * 1000);
 
   initCommands(client)
     .then((n) => console.log(`Registered ${n.size} slash commands globally.`))

@@ -22,7 +22,9 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('🛡️ Hantakyro — Status')
       .setDescription(
-        `**Protection:** ${p.enabled ? '🟢 ACTIVE' : '🔴 OFF'}\n` +
+        `**Bot:** 🟢 Online — ${client.guilds.cache.size} server(s)\n` +
+          `**Ping:** ${client.ws.ping}ms\n\n` +
+          `**Protection:** ${p.enabled ? '🟢 ACTIVE' : '🔴 OFF'}\n` +
           `**Punishment mode:** ${cfg.punish}\n` +
           `**Whitelisted users:** ${cfg.whitelist.length}\n` +
           `**Raid mode:** ${cfg.raidMode ? '🔴 LOCKED DOWN' : '🟢 Normal'}\n` +
