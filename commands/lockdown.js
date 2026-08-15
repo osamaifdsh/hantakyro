@@ -6,13 +6,15 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('lockdown')
     .setDescription('🛡️ قفل / فتح السيرفر أثناء الريد')
-    .addBooleanOption((o) => o.setName('state').setDescription('ON = قفل السيرفر، OFF = استرجاعه').setRequired(true)),
+    .addBooleanOption((o) => o.setName('state').setDescription('ON = قفل السيرفر، OFF = استرجاعه').setRequired(true))
+    .addStringOption((o) => o.setName('reason').setDescription('سبب القفل (اختياري)')),
 
   async execute(interaction, client) {
     if (!canManage(interaction, client)) {
       return interaction.reply({ content: '❌ You need **Manage Server** permission.', ephemeral: true });
     }
     const state = interaction.options.getBoolean('state');
+    const reason = interaction.options.getString('reason');
     const guild = interaction.guild;
     const cfg = getGuild(guild.id);
 
@@ -25,7 +27,10 @@ module.exports = {
         .catch(() => {});
       saveGuild(guild.id, cfg);
       return interaction.reply({
-        content: '🔴 **LOCKDOWN ENABLED** — verification set to HIGH, chat locked. Use `/lockdown false` to restore.',
+        content:
+          `🔴 **LOCKDOWN ENABLED** — verification HIGH + chat locked.` +
+          (reason ? `\n📌 Reason: **${reason}**` : '') +
+          `\nاستخدم \`/lockdown state:false\` لاسترجاع السيرفر.`,
         ephemeral: true
       });
     } else {

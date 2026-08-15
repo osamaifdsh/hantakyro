@@ -14,24 +14,31 @@ function loadCommands() {
 }
 
 async function initCommands(client) {
-  const commands = loadCommands();
   const rest = new REST({ version: '10' }).setToken(config.token);
-  const body = [...commands.values()].map((c) => c.data.toJSON());
+  const body = [...loadCommands().values()].map((c) => c.data.toJSON());
   try {
-    await rest.put(Routes.applicationCommands(config.clientId), { body });
-    console.log(`Registered ${commands.size} slash commands globally.`);
+    await rest.put(Routes.applicationCommands(config.clientId), { body: [] });
+    console.log('Cleared global commands (guild-only mode).');
   } catch (err) {
-    console.error('Failed to register slash commands globally:', err.message);
+    console.error('Failed to clear global commands:', err.message);
   }
   for (const guild of client.guilds.cache.values()) {
-    try {
-      await rest.put(Routes.applicationGuildCommands(config.clientId, guild.id), { body });
-      console.log(`Registered ${commands.size} commands instantly in guild: ${guild.name}`);
-    } catch (err) {
-      console.error(`Failed to register guild commands in ${guild.name}:`, err.message);
-    }
+    await registerGuildCommands(client, guild.id);
   }
-  return commands;
+  return loadCommands();
 }
 
-module.exports = { loadCommands, initCommands };
+async function registerGuildCommands(client, guildId) {
+  const rest = new REST({ version: '10' }).setToken(config.token);
+  const body = [...loadCommands().values()].map((c) => c.data.toJSON());
+  try {
+    await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body });
+    console.log(`Registered ${body.length} commands in guild: ${guildId}`);
+    return true;
+  } catch (err) {
+    console.error(`Failed to register commands in guild ${guildId}:`, err.message);
+    return false;
+  }
+}
+
+module.exports = { loadCommands, initCommands, registerGuildCommands };

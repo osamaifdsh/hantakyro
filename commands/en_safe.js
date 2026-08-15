@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getGuild, saveGuild, defaultConfig } = require('../handlers/storage');
+const { getGuild, saveGuild } = require('../handlers/storage');
 const { canManage } = require('../handlers/auth');
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
     }
 
     const cfg = getGuild(interaction.guild.id);
-    cfg.protection = defaultConfig().protection;
+    for (const k of Object.keys(cfg.protection)) cfg.protection[k] = true;
     cfg.protection.enabled = true;
     if (!cfg.punish) cfg.punish = 'ban';
     const ch = interaction.options.getChannel('log_channel');

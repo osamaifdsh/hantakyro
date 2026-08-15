@@ -24,11 +24,12 @@ module.exports = {
     }
     const mode = interaction.options.getString('mode');
     const cfg = getGuild(interaction.guild.id);
+    const old = cfg.punish;
     cfg.punish = mode;
     saveGuild(interaction.guild.id, cfg);
-    const label = mode === 'ban' ? '🚫 Ban' : mode === 'kick' ? '👢 Kick' : '🎭 Strip roles';
+    const labels = { ban: '🚫 Ban', kick: '👢 Kick', strip: '🎭 Strip roles' };
     return interaction.reply({
-      content: `${label} mode is now active. Rule-breakers will be **${mode}**.`,
+      content: `✅ Punishment mode updated:\n**${labels[old] || old}** → **${labels[mode]}**`,
       ephemeral: true
     });
   }

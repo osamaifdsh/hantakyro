@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits, Events } = require('discord.js');
 const config = require('./handlers/config');
-const { loadCommands, initCommands } = require('./handlers/commands');
+const { loadCommands, initCommands, registerGuildCommands } = require('./handlers/commands');
 const { initProtection } = require('./handlers/protection');
 const { startDashboard } = require('./dashboard/server');
 
@@ -49,6 +49,8 @@ if (config.dashboard && config.dashboard.enabled) {
 }
 
 initProtection(client);
+
+client.on(Events.GuildCreate, (guild) => registerGuildCommands(client, guild.id));
 
 client.on('debug', (m) => console.log('[dbg]', m));
 
