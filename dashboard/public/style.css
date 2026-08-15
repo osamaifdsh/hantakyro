@@ -65,6 +65,9 @@ body {
 }
 .login-card input:focus { border-color: var(--purple); }
 .hint { display: block; color: var(--muted); font-size: 11px; margin-top: 12px; }
+.legal-links { margin-top: 14px; font-size: 12px; color: var(--muted); }
+.legal-links a { color: #5865f2; text-decoration: none; }
+.legal-links a:hover { text-decoration: underline; }
 
 /* ---------- Buttons ---------- */
 button {

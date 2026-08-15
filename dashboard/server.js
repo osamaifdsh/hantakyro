@@ -83,6 +83,9 @@ function startDashboard(client) {
     res.json({ ok: true, bot: client.isReady() ? 'online' : 'offline', oauth: CLIENT_SECRET ? 'ready' : 'missing-secret' });
   });
 
+  app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'public', 'terms.html')));
+  app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')));
+
   app.get('/auth/login', (req, res) => {
     if (!CLIENT_SECRET || !CLIENT_ID || CLIENT_ID.includes('PUT_YOUR')) {
       return res.status(500).send('OAuth is not configured. Add your Client Secret in config.json (or DISCORD_CLIENT_SECRET env).');
