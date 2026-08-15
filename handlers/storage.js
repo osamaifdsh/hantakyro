@@ -44,7 +44,9 @@ function defaultConfig() {
       antiEmoji: true,
       antiRaid: true,
       antiSpam: true,
-      antiEveryone: true
+      antiEveryone: true,
+      antiLink: true,
+      antiMention: true
     },
     punish: 'ban',
     whitelist: [],
@@ -54,15 +56,38 @@ function defaultConfig() {
     raidWindow: 10000,
     spamThreshold: 5,
     spamWindow: 4000,
+    mentionThreshold: 5,
     logChannel: null,
-    previousVerification: 0
+    previousVerification: 0,
+    welcome: { enabled: false, channelId: null, message: 'Welcome {user} to {server}!' },
+    goodbye: { enabled: false, channelId: null, message: 'Goodbye {user}, see you soon!' },
+    autorole: { enabled: false, roleIds: [] }
   };
+}
+
+function mergeConfig(defaults, stored) {
+  const out = { ...defaults, ...stored };
+  for (const k of Object.keys(defaults)) {
+    const d = defaults[k];
+    const s = stored[k];
+    if (d && typeof d === 'object' && !Array.isArray(d)) {
+      if (s && typeof s === 'object' && !Array.isArray(s)) {
+        out[k] = { ...d, ...s };
+      } else {
+        out[k] = JSON.parse(JSON.stringify(d));
+      }
+    }
+  }
+  return out;
 }
 
 function getGuild(guildId) {
   const all = read(guildsFile);
-  if (!all[guildId]) {
+  if (!all[guildId] || typeof all[guildId] !== 'object') {
     all[guildId] = defaultConfig();
+    write(guildsFile, all);
+  } else {
+    all[guildId] = mergeConfig(defaultConfig(), all[guildId]);
     write(guildsFile, all);
   }
   return all[guildId];

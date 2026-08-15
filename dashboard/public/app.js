@@ -46,7 +46,8 @@ const MODULES = [
   ['antiChannelCreate', 'Anti Ch. Create'], ['antiChannelDelete', 'Anti Ch. Delete'], ['antiChannelUpdate', 'Anti Ch. Update'],
   ['antiRoleCreate', 'Anti Role Create'], ['antiRoleDelete', 'Anti Role Delete'], ['antiRoleUpdate', 'Anti Role Update'],
   ['antiWebhook', 'Anti Webhook'], ['antiGuildUpdate', 'Anti Guild Update'], ['antiEmoji', 'Anti Emoji'],
-  ['antiRaid', 'Anti Raid'], ['antiSpam', 'Anti Spam'], ['antiEveryone', 'Anti Everyone']
+  ['antiRaid', 'Anti Raid'], ['antiSpam', 'Anti Spam'], ['antiEveryone', 'Anti Everyone'],
+  ['antiLink', 'Anti Link'], ['antiMention', 'Anti Mass Mention']
 ];
 
 async function boot() {
@@ -134,11 +135,22 @@ async function selectGuild(id) {
   $('raid-threshold').value = state.data.raidThreshold;
   $('raid-window').value = Math.round(state.data.raidWindow / 1000);
   $('log-channel').value = state.data.logChannel || '';
+  $('spam-threshold').value = state.data.spamThreshold;
+  $('spam-window').value = Math.round(state.data.spamWindow / 1000);
+  $('mention-threshold').value = state.data.mentionThreshold;
   $('lockdown-toggle').checked = !!state.data.raidMode;
+
+  $('welcome-toggle').checked = !!(state.data.welcome && state.data.welcome.enabled);
+  $('welcome-channel').value = (state.data.welcome && state.data.welcome.channelId) || '';
+  $('welcome-message').value = (state.data.welcome && state.data.welcome.message) || 'Welcome {user} to {server}!';
+  $('goodbye-toggle').checked = !!(state.data.goodbye && state.data.goodbye.enabled);
+  $('goodbye-channel').value = (state.data.goodbye && state.data.goodbye.channelId) || '';
+  $('goodbye-message').value = (state.data.goodbye && state.data.goodbye.message) || 'Goodbye {user}!';
 
   renderModules();
   renderWhitelist();
   renderWhitelistRoles();
+  renderAutoRole();
   renderLogs();
 }
 
@@ -210,6 +222,31 @@ function renderWhitelistRoles() {
       toast('Role removed from whitelist');
       state.data.whitelistRoles = state.data.whitelistRoles.filter((x) => x !== id);
       renderWhitelistRoles();
+    };
+    box.appendChild(row);
+  });
+}
+
+function renderAutoRole() {
+  const box = $('autorole');
+  box.innerHTML = '';
+  const roles = (state.data.autorole && state.data.autorole.roleIds) || [];
+  if (!roles.length) {
+    box.innerHTML = '<p style="color:var(--muted);font-size:13px;">لا توجد رتب تلقائية. أضف Role ID أدناه.</p>';
+    return;
+  }
+  roles.forEach((id) => {
+    const row = document.createElement('div');
+    row.className = 'wl-row';
+    row.innerHTML = `<span>${id}</span><button>Remove</button>`;
+    row.querySelector('button').onclick = async () => {
+      await req('/guild/' + state.current + '/config', {
+        method: 'POST',
+        body: JSON.stringify({ key: 'autorole.remove', value: id })
+      });
+      toast('Role removed from auto-role');
+      state.data.autorole.roleIds = state.data.autorole.roleIds.filter((x) => x !== id);
+      renderAutoRole();
     };
     box.appendChild(row);
   });
@@ -319,6 +356,74 @@ $('wl-role-add').onclick = async () => {
   $('wl-role-id').value = '';
   state.data.whitelistRoles.push(id);
   renderWhitelistRoles();
+};
+
+$('spam-threshold').onchange = async (e) => {
+  await req('/guild/' + state.current + '/config', {
+    method: 'POST',
+    body: JSON.stringify({ key: 'spamThreshold', value: Number(e.target.value) })
+  });
+  toast('Spam threshold updated');
+};
+
+$('spam-window').onchange = async (e) => {
+  await req('/guild/' + state.current + '/config', {
+    method: 'POST',
+    body: JSON.stringify({ key: 'spamWindow', value: Number(e.target.value) * 1000 })
+  });
+  toast('Spam window updated');
+};
+
+$('mention-threshold').onchange = async (e) => {
+  await req('/guild/' + state.current + '/config', {
+    method: 'POST',
+    body: JSON.stringify({ key: 'mentionThreshold', value: Number(e.target.value) })
+  });
+  toast('Mention threshold updated');
+};
+
+function bindWelcomeGoodbye(prefix, label) {
+  $('' + prefix + '-toggle').onchange = async (e) => {
+    await req('/guild/' + state.current + '/config', {
+      method: 'POST',
+      body: JSON.stringify({ key: prefix + '.enabled', value: e.target.checked })
+    });
+    state.data[prefix].enabled = e.target.checked;
+    toast(`${label} ${e.target.checked ? 'ENABLED' : 'disabled'}`);
+  };
+  $('' + prefix + '-channel').onchange = async (e) => {
+    await req('/guild/' + state.current + '/config', {
+      method: 'POST',
+      body: JSON.stringify({ key: prefix + '.channelId', value: e.target.value.trim() })
+    });
+    state.data[prefix].channelId = e.target.value.trim();
+    toast(`${label} channel updated`);
+  };
+  $('' + prefix + '-message').onchange = async (e) => {
+    await req('/guild/' + state.current + '/config', {
+      method: 'POST',
+      body: JSON.stringify({ key: prefix + '.message', value: e.target.value.trim() })
+    });
+    state.data[prefix].message = e.target.value.trim();
+    toast(`${label} message updated`);
+  };
+}
+bindWelcomeGoodbye('welcome', 'Welcome');
+bindWelcomeGoodbye('goodbye', 'Goodbye');
+
+$('ar-add').onclick = async () => {
+  const id = $('ar-role-id').value.trim();
+  if (!id || !/^\d+$/.test(id)) return toast('Enter a valid role ID', 'err');
+  await req('/guild/' + state.current + '/config', {
+    method: 'POST',
+    body: JSON.stringify({ key: 'autorole.add', value: id })
+  });
+  toast('Role added to auto-role');
+  $('ar-role-id').value = '';
+  if (!state.data.autorole) state.data.autorole = { enabled: false, roleIds: [] };
+  state.data.autorole.roleIds.push(id);
+  state.data.autorole.enabled = true;
+  renderAutoRole();
 };
 
 $('pu-run').onclick = async () => {

@@ -101,10 +101,65 @@
                 <input type="text" id="log-channel" placeholder="Channel ID" />
               </div>
               <div class="setting">
+                <label>Spam threshold (messages)</label>
+                <input type="number" id="spam-threshold" min="2" max="100" />
+              </div>
+              <div class="setting">
+                <label>Spam window (seconds)</label>
+                <input type="number" id="spam-window" min="1" max="60" />
+              </div>
+              <div class="setting">
+                <label>Mention threshold</label>
+                <input type="number" id="mention-threshold" min="1" max="50" />
+              </div>
+              <div class="setting">
                 <label>Raid lockdown</label>
                 <label class="switch"><input type="checkbox" id="lockdown-toggle" /><span class="slider"></span></label>
               </div>
             </div>
+          </section>
+
+          <section class="card">
+            <div class="card-title">
+              <h3>Welcome Message</h3>
+              <label class="switch"><input type="checkbox" id="welcome-toggle" /><span class="slider"></span></label>
+            </div>
+            <div class="settings">
+              <div class="setting">
+                <label>Channel (ID)</label>
+                <input type="text" id="welcome-channel" placeholder="Channel ID" />
+              </div>
+              <div class="setting">
+                <label>Message</label>
+                <input type="text" id="welcome-message" placeholder="Welcome {user} to {server}!" />
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-title">
+              <h3>Goodbye Message</h3>
+              <label class="switch"><input type="checkbox" id="goodbye-toggle" /><span class="slider"></span></label>
+            </div>
+            <div class="settings">
+              <div class="setting">
+                <label>Channel (ID)</label>
+                <input type="text" id="goodbye-channel" placeholder="Channel ID" />
+              </div>
+              <div class="setting">
+                <label>Message</label>
+                <input type="text" id="goodbye-message" placeholder="Goodbye {user}!" />
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-title"><h3>Auto-Role</h3></div>
+            <div class="whitelist-add">
+              <input type="text" id="ar-role-id" placeholder="Role ID" />
+              <button class="btn primary" id="ar-add">Add role</button>
+            </div>
+            <div id="autorole"></div>
           </section>
 
           <section class="card">

@@ -16,13 +16,20 @@ function loadCommands() {
 async function initCommands(client) {
   const commands = loadCommands();
   const rest = new REST({ version: '10' }).setToken(config.token);
+  const body = [...commands.values()].map((c) => c.data.toJSON());
   try {
-    await rest.put(Routes.applicationCommands(config.clientId), {
-      body: [...commands.values()].map((c) => c.data.toJSON())
-    });
+    await rest.put(Routes.applicationCommands(config.clientId), { body });
     console.log(`Registered ${commands.size} slash commands globally.`);
   } catch (err) {
-    console.error('Failed to register slash commands:', err.message);
+    console.error('Failed to register slash commands globally:', err.message);
+  }
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      await rest.put(Routes.applicationGuildCommands(config.clientId, guild.id), { body });
+      console.log(`Registered ${commands.size} commands instantly in guild: ${guild.name}`);
+    } catch (err) {
+      console.error(`Failed to register guild commands in ${guild.name}:`, err.message);
+    }
   }
   return commands;
 }

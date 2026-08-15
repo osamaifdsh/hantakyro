@@ -8,7 +8,7 @@ module.exports = {
       .setTitle('🛡️ Hantakyro Commands')
       .setColor(0x5865f2)
       .setDescription(
-        '**Protection:**\n' +
+          '**Protection:**\n' +
           '`/en_safe` — Activate full protection\n' +
           '`/status` — Show protection status\n' +
           '`/protection` — Toggle a module\n' +
@@ -22,6 +22,18 @@ module.exports = {
           '`/purge` — Delete messages\n' +
           '`/unban` — Unban a user\n' +
           '`/logs` — Show recent protection actions\n\n' +
+          '**Community:**\n' +
+          '`/welcome` — Welcome message on join\n' +
+          '`/goodbye` — Goodbye message on leave\n' +
+          '`/autorole` — Auto role for new members\n' +
+          '`/announce` — Send an official announcement\n\n' +
+          '**Info:**\n' +
+          '`/botinfo` — Bot status, servers, uptime\n' +
+          '`/serverinfo` — Server info\n' +
+          '`/userinfo` — User info\n' +
+          '`/members` — Member statistics\n' +
+          '`/avatar` — View an avatar\n' +
+          '`/ping` — Check bot latency\n\n' +
           '**Dashboard:** open `http://localhost:3000` (password in config.json)'
       )
       .setFooter({ text: 'Hantakyro — The Strongest Protection Bot' })

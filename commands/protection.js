@@ -17,7 +17,9 @@ const features = [
   ['antiEmoji', 'Anti Emoji'],
   ['antiRaid', 'Anti Raid'],
   ['antiSpam', 'Anti Spam'],
-  ['antiEveryone', 'Anti Everyone Ping']
+  ['antiEveryone', 'Anti Everyone Ping'],
+  ['antiLink', 'Anti Link'],
+  ['antiMention', 'Anti Mass Mention']
 ];
 
 module.exports = {

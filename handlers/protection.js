@@ -73,6 +73,21 @@ async function onBanAdd(client, guild, victim) {
 }
 
 async function onMemberRemove(client, guild, member) {
+  const cfg = getGuild(guild.id);
+
+  if (cfg.goodbye && cfg.goodbye.enabled && cfg.goodbye.channelId) {
+    const ch = await guild.channels.fetch(cfg.goodbye.channelId).catch(() => null);
+    if (ch) {
+      const name = member.user ? member.user.username : 'member';
+      const text = (cfg.goodbye.message || 'Goodbye {user}, see you soon!')
+        .replace(/\{user\}/g, member.user ? `<@${member.user.id}>` : '')
+        .replace(/\{username\}/g, name)
+        .replace(/\{server\}/g, guild.name)
+        .replace(/\{count\}/g, guild.memberCount);
+      await ch.send(text).catch(() => {});
+    }
+  }
+
   if (!featureOn(guild, 'antiKick')) return;
   const key = `kick:${guild.id}:${member.id}`;
   if (isBotAction(key)) return;
@@ -93,6 +108,28 @@ async function onMemberRemove(client, guild, member) {
 
 async function onMemberAdd(client, guild, member) {
   const cfg = getGuild(guild.id);
+
+  if (cfg.welcome && cfg.welcome.enabled && cfg.welcome.channelId) {
+    const ch = await guild.channels.fetch(cfg.welcome.channelId).catch(() => null);
+    if (ch) {
+      const text = (cfg.welcome.message || 'Welcome {user} to {server}!')
+        .replace(/\{user\}/g, `<@${member.id}>`)
+        .replace(/\{username\}/g, member.user.username)
+        .replace(/\{server\}/g, guild.name)
+        .replace(/\{count\}/g, guild.memberCount);
+      await ch.send(text).catch(() => {});
+    }
+  }
+
+  if (cfg.autorole && cfg.autorole.enabled && cfg.autorole.roleIds && cfg.autorole.roleIds.length) {
+    for (const roleId of cfg.autorole.roleIds) {
+      const role = guild.roles.cache.get(roleId);
+      if (role && role.editable) {
+        await member.roles.add(roleId, 'Hantakyro auto-role').catch(() => {});
+      }
+    }
+  }
+
   if (!cfg.protection.enabled) return;
 
   if (member.user.bot && featureOn(guild, 'antiBotAdd')) {
@@ -335,6 +372,40 @@ async function onMessage(client, message) {
       guild,
       '🔕 Anti-Everyone',
       `**${message.author.tag}** pings @everyone/@here → **1h timeout**`,
+      0xff9900
+    );
+    return;
+  }
+
+  if (featureOn(guild, 'antiLink') && /https?:\/\/\S+/i.test(message.content)) {
+    const member = await guild.members.fetch(message.author.id).catch(() => null);
+    if (member) {
+      await member.timeout(60 * 60 * 1000, 'Hantakyro Anti-Link').catch(() => {});
+    }
+    await message.delete().catch(() => {});
+    addLog(guild.id, { action: 'antiLink', target: message.author.tag, reason: 'sent a link' });
+    await sendLog(
+      client,
+      guild,
+      '🔗 Anti-Link',
+      `**${message.author.tag}** sent a link → **1h timeout** + message deleted`,
+      0xff9900
+    );
+    return;
+  }
+
+  if (featureOn(guild, 'antiMention') && message.mentions.users.size > cfg.mentionThreshold) {
+    const member = await guild.members.fetch(message.author.id).catch(() => null);
+    if (member) {
+      await member.timeout(10 * 60 * 1000, 'Hantakyro Anti-Mention').catch(() => {});
+    }
+    await message.delete().catch(() => {});
+    addLog(guild.id, { action: 'antiMention', target: message.author.tag, reason: 'mass mentions' });
+    await sendLog(
+      client,
+      guild,
+      '📣 Anti-Mention',
+      `**${message.author.tag}** mentioned too many users (${message.mentions.users.size}) → **10m timeout**`,
       0xff9900
     );
     return;

@@ -220,6 +220,26 @@ function startDashboard(client) {
       cfg.raidWindow = Math.max(3000, Math.min(60000, Number(value)));
     } else if (key === 'logChannel') {
       cfg.logChannel = value;
+    } else if (key.startsWith('welcome.') || key.startsWith('goodbye.')) {
+      const parts = key.split('.');
+      if (!cfg[parts[0]]) cfg[parts[0]] = {};
+      cfg[parts[0]][parts[1]] = value;
+    } else if (key === 'autorole.enabled') {
+      cfg.autorole.enabled = value;
+    } else if (key === 'autorole.add') {
+      if (value && !cfg.autorole.roleIds.includes(value)) {
+        cfg.autorole.roleIds.push(value);
+        cfg.autorole.enabled = true;
+      }
+    } else if (key === 'autorole.remove') {
+      cfg.autorole.roleIds = cfg.autorole.roleIds.filter((id) => id !== value);
+      if (!cfg.autorole.roleIds.length) cfg.autorole.enabled = false;
+    } else if (key === 'mentionThreshold') {
+      cfg.mentionThreshold = Math.max(1, Math.min(50, Number(value)));
+    } else if (key === 'spamThreshold') {
+      cfg.spamThreshold = Math.max(2, Math.min(100, Number(value)));
+    } else if (key === 'spamWindow') {
+      cfg.spamWindow = Math.max(1000, Math.min(60000, Number(value)));
     }
     saveGuild(req.params.id, cfg);
     res.json({ ok: true });
